@@ -16,6 +16,7 @@ const staticCopyTargets: Target[] = [
     { src: "preview.png", dest: "." },
     { src: "README.md", dest: "." },
     { src: "README_zh_CN.md", dest: "." },
+    { src: "LICENSE", dest: "." },
     { src: "src/i18n/*.json", dest: "i18n" },
 ];
 
