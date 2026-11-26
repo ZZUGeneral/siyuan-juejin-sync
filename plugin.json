@@ -1,0 +1,48 @@
+{
+  "name": "siyuan-juejin-sync",
+  "author": "贺龙",
+  "url": "https://github.com/heLong/siyuan-juejin-sync",
+  "version": "0.1.0",
+  "minAppVersion": "3.8.5",
+  "backends": [
+    "windows",
+    "linux",
+    "darwin",
+    "ios",
+    "android",
+    "docker"
+  ],
+  "frontends": [
+    "desktop",
+    "desktop-window",
+    "mobile",
+    "browser-desktop",
+    "browser-mobile"
+  ],
+  "displayName": {
+    "default": "Juejin Sync",
+    "zh_CN": "掘金同步",
+    "en_US": "Juejin Sync"
+  },
+  "description": {
+    "default": "Sync SiYuan documents to Juejin drafts (unofficial private API), with local image relocation and reverse import.",
+    "zh_CN": "把思源文档一键同步为掘金草稿（依赖非官方私有接口），自动转存本地图片，并支持反向导入掘金文章。",
+    "en_US": "Sync SiYuan documents to Juejin drafts (unofficial private API), with local image relocation and reverse import."
+  },
+  "readme": {
+    "default": "README.md",
+    "zh_CN": "README_zh_CN.md",
+    "en_US": "README.md"
+  },
+  "icon": "icon.png",
+  "preview": "preview.png",
+  "funding": {
+    "custom": []
+  },
+  "keywords": [
+    "juejin",
+    "掘金",
+    "publish",
+    "blog"
+  ]
+}

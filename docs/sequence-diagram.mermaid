@@ -1,0 +1,165 @@
+%% 正向同步 P0 主路径
+
+sequenceDiagram
+    autonumber
+    participant U as 用户
+    participant P as PluginEntry/UI
+    participant E as SyncEngine
+    participant K as 思源内核
+    participant S as MarkdownSanitizer
+    participant I as ImagePipeline
+    participant J as 掘金接口
+
+    U->>P: 右键「同步到掘金」/ Dock 按钮 / 命令
+    P->>P: 取 currentDocId，setStore({busy:true})
+    P->>E: sync(docId, {title?, brief?})
+
+    E->>E: settings.getCredential()
+    alt 无凭证
+        E-->>P: SyncIssue(AUTH_EXPIRED)
+        P-->>U: 提示 + 跳转设置页（含风险确认）
+    end
+
+    E->>K: exportMdContent(docId)
+    K-->>E: {hPath, content}
+    alt content 为空
+        E-->>P: blocked "文档内容为空，已终止同步"
+    end
+
+    E->>S: sanitize(content) 做 S0-S3 与 S5，纯函数
+    S-->>E: {markdown, degradations, warnings, imageRefs}
+    E->>E: contentHash = sha256(markdown) 图片替换前计算
+
+    E->>K: getBlockAttrs(docId)
+    K-->>E: {custom-juejin-*}
+    E->>E: decideAction(binding)
+    alt status=published 且 mode=draft
+        E-->>P: blocked "已发布文章本版本不支持修改"
+        P-->>U: 提示 + 打开掘金链接
+    end
+    alt 有 draftId 且 (mode=draft 或允许 update)
+        E->>E: action = updated
+    else 无 draftId
+        E->>E: action = created
+    end
+
+    E->>E: 组装元信息（文档级>笔记本映射>全局默认）+ brief(50~100)
+    alt 分类或标签缺失
+        E-->>P: 弹 syncDialog 让用户补齐
+        U-->>P: 确认
+    end
+
+    Note over E,I: D1+D2 图片环节无条件执行，失败只记 warning 绝不中断
+    E->>I: preflight(imageRefs) 失败仅返回 warnings，永不 throw
+    I-->>E: PreflightReport{total, reachable, warnings}
+    E->>E: report.warnings 并入 result.warnings 后继续，不做任何 return
+    alt imageRefs 非空
+        E->>I: process(markdown, imageRefs, onProgress)
+        loop 每张（串行，间隔 300ms）
+            I->>K: fetchAssetBinary("assets/x.png")
+            K-->>I: ArrayBuffer
+            I->>J: uploadImage(bytes) 走 ImageX 五步
+            J-->>I: cdnUrl
+        end
+        I-->>E: {markdown2, uploaded, failed[]}
+        Note over E: failed>0 → partial=true（不阻断，继续建草稿）
+    end
+
+    E->>J: createDraft(input) 或 updateDraft(draftId, input)
+    alt err_no != 0
+        J-->>E: SyncIssue(kind, raw)
+        E->>K: setBlockAttrs(custom-juejin-last-error)
+        E-->>P: SyncResult{ok:false, error}
+        P-->>U: 分类化错误提示（凭证过期/风控/接口变更/网络）
+    end
+    J-->>E: {draftId}
+    opt mode === "publish"
+        E->>J: publishDraft(draftId, meta)
+        J-->>E: {articleId}
+    end
+
+    E->>K: setBlockAttrs(article-id / draft-id / hash / time / status)
+    E->>P: SyncResult{ok:true, partial, juejinUrl}
+    P-->>U: 结果面板（状态、降级计数、失败图片清单、打开链接）
+
+
+
+%% 反向导入 P2
+
+sequenceDiagram
+    autonumber
+    participant U as 用户
+    participant P as importPanel
+    participant M as Importer
+    participant K as KernelApi
+    participant J as 掘金
+
+    U->>P: 粘贴 https://juejin.cn/post/{id} 或纯 id
+    P->>M: parseLink(input)
+    alt 无法解析
+        M-->>P: SyncIssue(PARAM_INVALID) "链接格式不正确"
+    end
+    M-->>P: articleId
+
+    P->>M: fetchArticle(articleId)
+    M->>J: POST /content_api/v1/article/detail {articleId}【待验证】
+    alt 私接口不可用（实测任意 id 返回 404 内容为空）
+        M->>J: GET https://juejin.cn/post/{id}  （取 HTML）
+        J-->>M: html
+        M->>M: extractNuxtMarkContent(html) 取 __NUXT__ 内 mark_content
+        M->>M: source = "page-fallback"（A4：必须记录降级，不得静默）
+    end
+    M-->>P: {title, markdown, imageCount, source}
+    P-->>U: 预览（标题/字数/图片数/目标路径）
+    opt source === "page-fallback"
+        P-->>U: 显式提示 import.degraded.notice：已降级为页面解析，可能丢失公式/代码高亮
+    end
+
+    U->>P: 选笔记本 + 确认路径模板
+    P->>M: import(articleId, notebook, path, overwrite)
+
+    loop 正文中每张掘金 CDN 图片
+        M->>J: getBinary(cdnUrl)
+        J-->>M: ArrayBuffer
+        M->>K: uploadAsset(bytes, filename) 走 multipart
+        K-->>M: assets/xxx-2026...png
+        Note over M: 失败 → 保留远程 URL + 记入 failed[]
+    end
+
+    M->>M: 替换图片链接为 assets/ 相对路径
+    M->>K: createDocWithMd(notebook, path, markdown)
+    K-->>M: newDocId
+    M->>K: setBlockAttrs(newDocId, {custom-juejin-source-article-id, custom-juejin-status:"imported"})
+    M->>K: openDoc(newDocId)
+    M-->>U: 导入成功（含失败图片清单）
+
+
+
+%% 图片上传子流程 ImagePipeline 内部
+
+sequenceDiagram
+    autonumber
+    participant I as ImagePipeline
+    participant K as KernelApi
+    participant X as 内核代理
+    participant JU as api.juejin.cn
+    participant BX as imagex.bytedanceapi.com
+
+    I->>K: fetchAssetBinary("assets/x.png")
+    K-->>I: ArrayBuffer + mime
+    I->>X: GET /imagex/v2/gen_token?aid=2608&uuid&client=web (Cookie)
+    X->>JU: 转发
+    JU-->>X: {AccessKeyId, SecretAccessKey, SessionToken}
+    I->>I: signSigV4(ApplyImageUpload)
+    I->>X: GET imagex.bytedanceapi.com ?Action=ApplyImageUpload&Version=2018-08-01&ServiceId=73owjymdk6
+    X->>BX: 转发（authorization, x-amz-date, x-amz-security-token）
+    BX-->>X: {StoreUri, Auth, SessionKey}
+    I->>I: uploadHost = JSON(base64(SessionKey)).uploadHost
+    I->>I: crc32 = crc32Hex(bytes)
+    I->>X: POST https://{uploadHost}/{StoreUri}  payloadEncoding=base64, Content-CRC32
+    X->>BX: 转发（authorization=Auth, Content-Type: application/octet-stream）
+    BX-->>X: 200
+    I->>X: POST ?Action=CommitImageUpload&SessionKey=...（SigV4）
+    BX-->>X: Result.Results[0].UriStatus == 2000
+    I->>X: GET /imagex/v2/get_img_url?aid&uuid&uri&img_type=private
+    JU-->>I: data.main_url  ← 正文替换用

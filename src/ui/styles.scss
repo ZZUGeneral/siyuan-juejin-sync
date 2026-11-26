@@ -1,0 +1,1034 @@
+/**
+ * Plugin styles.
+ *
+ * Every colour, radius and border comes from a SiYuan CSS variable so the panel follows the
+ * active theme automatically; nothing here hard-codes a palette.
+ */
+
+.jjs-root {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--b3-theme-on-background);
+}
+
+/**
+ * The settings dialog is the tallest surface in the plugin. SiYuan's dialog frame does not
+ * scroll its body, so without this the last group is clipped instead of reachable.
+ */
+.jjs-settings {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+}
+
+/* ---------- confirm dialog shell (ZONE 1–5) ---------- */
+
+/**
+ * Five zones, one scroller.
+ *
+ * SiYuan's `Dialog` never scrolls its own body: the intent card, the notices and the footer have
+ * to stay put while only `__body` (the two cards + the two `<details>`) scrolls. That is why the
+ * root gets a `max-height` and the footer is `flex: 0 0 auto` — the short-content case simply
+ * ends up shorter, because `__body` has no fixed height.
+ */
+.jjs-syncdialog {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: calc(100vh - 220px);
+    min-height: 0;
+}
+
+.jjs-syncdialog__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.jjs-syncdialog__foot {
+    flex: 0 0 auto;
+    border-top: 1px solid var(--b3-border-color);
+    padding-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* Opaque, so scrolled cards cannot bleed through the footer. */
+    background: var(--b3-theme-background);
+}
+
+/*
+ * The action row is pinned right even when the gate is gone.
+ *
+ * `.jjs-row--end` only right-aligns *within its own width*, and that width is content-sized: with
+ * the gate visible it was pushed right, with the gate hidden it collapsed and the buttons jumped
+ * to the left. Fixing it on the footer row (not on `.jjs-row--end`, which the dock and the result
+ * panel also use) keeps the primary button at one x position for every validation state.
+ */
+.jjs-syncdialog__foot > .jjs-row {
+    margin-left: auto;
+}
+
+/* Roomier cards inside the dialog only; the dock keeps its compact 10px rhythm. */
+.jjs-syncdialog .jjs-card {
+    padding: 16px;
+    gap: 12px;
+}
+
+/*
+ * Fixed minimum width on the footer buttons: the primary label switches between "start sync" and
+ * "publish now", and a jumping button makes the whole footer feel unstable.
+ */
+.jjs-syncdialog__foot .jjs-button {
+    min-width: 96px;
+}
+
+.jjs-syncdialog__foot .jjs-button:disabled {
+    cursor: not-allowed;
+}
+
+/* A capped suggestion pool keeps a 700-tag cache from pushing the cards off screen. */
+.jjs-syncdialog .jjs-suggestions {
+    max-height: 148px;
+}
+
+/*
+ * The intent card's badge is 12px on `--b3-theme-primary-lightest`; primary text at that size is
+ * too weak in the pastel themes (same trade-off as `.jjs-status--info .jjs-status__label`). The
+ * tint keeps the badge readable as "info", so only the text colour is neutralised — and only
+ * inside the dialog, so the dock and the result panel keep their current look.
+ */
+.jjs-syncdialog .jjs-status__top .jjs-badge--info {
+    color: var(--b3-theme-on-surface);
+}
+
+.jjs-syncdialog .jjs-card__title {
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    opacity: 0.65;
+}
+
+/* 13px / 1.5 is the reading size for user content; 6px 9px keeps the fields compact. */
+.jjs-syncdialog .jjs-input,
+.jjs-syncdialog .jjs-textarea,
+.jjs-syncdialog .jjs-select {
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 6px 9px;
+}
+
+/**
+ * The excerpt is prose, not code.
+ *
+ * The inherited `--b3-font-family-code` at 12px was one of the main reasons the dialog read like
+ * a debug panel; monospace is reserved for genuinely technical output (`.jjs-kv`, `.jjs-mono`).
+ */
+.jjs-syncdialog .jjs-textarea {
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+/* ---------- layout ---------- */
+
+.jjs-group {
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--b3-theme-surface);
+}
+
+.jjs-group__title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--b3-theme-on-surface);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--b3-border-color);
+}
+
+.jjs-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.jjs-row--end {
+    justify-content: flex-end;
+}
+
+.jjs-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.jjs-field__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.jjs-field__label {
+    font-weight: 500;
+    color: var(--b3-theme-on-surface);
+}
+
+.jjs-field__body {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.jjs-hint {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+    opacity: 0.75;
+}
+
+.jjs-hint--warn {
+    color: var(--b3-card-warning-color);
+    opacity: 1;
+}
+
+.jjs-hint--error {
+    color: var(--b3-card-error-color);
+    opacity: 1;
+}
+
+/* A hint the dialog hides until it has something to say must not leave its gap behind. */
+.jjs-hint[hidden] {
+    display: none;
+}
+
+/**
+ * Standing rule / out-of-range reason for the excerpt — one slot, two states.
+ *
+ * It is a single node on purpose: a separate error row would shift everything below it and the
+ * user would read the same 50–100 rule twice.
+ */
+.jjs-field__rule {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+    opacity: 0.75;
+    /* Pulls the line back to the 4px rhythm under the control. */
+    margin-top: -4px;
+}
+
+.jjs-field__rule--error {
+    color: var(--b3-card-error-color);
+    opacity: 1;
+    font-weight: 500;
+}
+
+/**
+ * Invalid field: a border on the control that is actually wrong, nothing else.
+ *
+ * Deliberately direct-child selectors. A descendant selector would also repaint the search box
+ * inside the tag picker, which reads as "the search field is wrong" instead of "you have not
+ * picked a tag yet".
+ */
+.jjs-field--invalid > .jjs-field__body > .jjs-input,
+.jjs-field--invalid > .jjs-field__body > .jjs-textarea,
+.jjs-field--invalid > .jjs-field__body > .jjs-select {
+    border-color: var(--b3-card-error-color);
+}
+
+/**
+ * Footer gate: the reason a disabled primary button is disabled, on the same line as the buttons.
+ *
+ * The `!` mark is drawn with `::before` — no SVG, no icon font, so it inherits the theme's error
+ * tokens instead of baking a colour into an asset.
+ */
+.jjs-gate {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--b3-card-error-color);
+}
+
+.jjs-gate::before {
+    content: "!";
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: var(--b3-card-error-background);
+    font-size: 11px;
+    line-height: 14px;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* Not rendered at all while the form is valid — a hidden row must not reserve 18px. */
+.jjs-gate[hidden] {
+    display: none;
+}
+
+/* ---------- notices ---------- */
+
+/**
+ * Full-width notice: the "this is irreversible" and "this may already be published" blocks.
+ *
+ * Both are 1px-bordered strips rather than cards, which keeps the dialog at three cards.
+ */
+.jjs-notice {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+}
+
+.jjs-notice--warn {
+    background: var(--b3-card-warning-background);
+    border-color: var(--b3-card-warning-color);
+    /* 3px solid edge: "stop and read this", the same device the status card uses. */
+    border-left-width: 3px;
+    color: var(--b3-card-warning-color);
+}
+
+.jjs-notice--quiet {
+    background: var(--b3-theme-surface-lighter, var(--b3-theme-background));
+    border-color: var(--b3-border-color);
+    color: var(--b3-theme-on-surface);
+}
+
+.jjs-notice__title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.jjs-notice__body {
+    font-size: 12px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.jjs-notice--quiet .jjs-notice__body {
+    color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+}
+
+.jjs-input,
+.jjs-textarea,
+.jjs-select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.jjs-textarea {
+    resize: vertical;
+    font-family: var(--b3-font-family-code, monospace);
+    font-size: 12px;
+}
+
+.jjs-checkbox {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.jjs-check {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 4px 0 0;
+    accent-color: var(--b3-theme-primary, #5b8ff9);
+    cursor: pointer;
+}
+
+.jjs-checkbox__text {
+    flex: 1;
+}
+
+.jjs-button {
+    flex: 0 0 auto;
+}
+
+/* ---------- badges ---------- */
+
+.jjs-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 18px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.jjs-badge--muted {
+    background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.06));
+    color: var(--b3-theme-on-surface);
+    border-color: var(--b3-border-color);
+}
+
+.jjs-badge--info {
+    background: var(--b3-theme-primary-lightest, rgba(30, 128, 255, 0.12));
+    color: var(--b3-theme-primary);
+}
+
+.jjs-badge--ok {
+    background: var(--b3-card-success-background);
+    color: var(--b3-card-success-color);
+}
+
+.jjs-badge--warn {
+    background: var(--b3-card-warning-background);
+    color: var(--b3-card-warning-color);
+}
+
+.jjs-badge--error {
+    background: var(--b3-card-error-background);
+    color: var(--b3-card-error-color);
+}
+
+/* ---------- chips / tag picker ---------- */
+
+.jjs-chipinput {
+    /* `.jjs-field__body` is a flex row, so without this the picker collapses to the intrinsic
+     * width of the search box and the suggestion list renders as a narrow column. */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+
+/*
+ * The "N selected" counter is blank while nothing is selected (the chip row carries the reason).
+ * Reserving one line keeps the picker from shifting the moment the first tag is picked.
+ */
+.jjs-chipinput > .jjs-hint {
+    min-height: 18px;
+}
+
+/* Tag import: one input + one action, sitting under the picker. */
+.jjs-import {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 2px 0 0;
+}
+
+.jjs-import .jjs-input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.jjs-import .jjs-ghost {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.jjs-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    /* Keeps the row from collapsing when nothing is selected: the "pick a tag" line lives here. */
+    min-height: 24px;
+}
+
+.jjs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--b3-theme-primary-lightest, rgba(30, 128, 255, 0.12));
+    /* Neutral text: `--b3-theme-primary` at 12px is unreadable in the pastel themes. */
+    color: var(--b3-theme-on-surface);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.jjs-chip__x {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 11px;
+}
+
+.jjs-chip__x:hover {
+    opacity: 1;
+}
+
+.jjs-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    background: var(--b3-theme-background);
+}
+
+.jjs-suggestion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--b3-border-color);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.jjs-suggestion:hover {
+    border-color: var(--b3-theme-primary);
+}
+
+.jjs-suggestion--active {
+    background: var(--b3-theme-primary-lightest, rgba(30, 128, 255, 0.12));
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-surface);
+}
+
+/**
+ * A tag whose cached name is missing (blank or a bare id).
+ *
+ * Italic + secondary colour, no red: the tag is still valid and still submittable, the user just
+ * cannot read its name. Ids themselves are never rendered — see `components.ts`.
+ */
+.jjs-tag-unnamed {
+    font-style: italic;
+    color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+    background: var(--b3-theme-surface-lighter, var(--b3-theme-background));
+    border-color: var(--b3-border-color);
+}
+
+/* Explains an empty suggestion box instead of leaving the user staring at a blank frame. */
+.jjs-suggestions__note {
+    flex: 1 0 100%;
+    padding: 2px 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    opacity: 0.7;
+}
+
+/* Re-mountable settings field (the dock/dialog swap its contents, not its position). */
+.jjs-field-host {
+    min-width: 0;
+}
+
+/*
+ * Empty-state row inside a field: the reason takes the free space, the action keeps its width.
+ * Used by "no tags yet" + the inline "sync tags" button.
+ */
+.jjs-field__body > .jjs-row {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.jjs-field__body > .jjs-row > .jjs-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* ---------- details / kv ---------- */
+
+.jjs-details {
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    padding: 8px 10px;
+    background: var(--b3-theme-background);
+}
+
+.jjs-details__summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface);
+}
+
+/**
+ * Borderless `<details>` variant for the dialog's two auxiliary sections.
+ *
+ * The dialog must not grow a fourth and fifth card, so these keep no frame and no background;
+ * only the disclosure triangle marks them as collapsible. Scoped to the modifier so the dock and
+ * the settings dialog keep their framed panels.
+ */
+.jjs-details--plain {
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    padding: 2px 0;
+}
+
+.jjs-details--plain > .jjs-details__summary {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.6;
+    opacity: 0.8;
+    list-style: none;
+}
+
+.jjs-details--plain > .jjs-details__summary::-webkit-details-marker {
+    display: none;
+}
+
+.jjs-details--plain > .jjs-details__summary::before {
+    content: "▸";
+    flex: 0 0 auto;
+    width: 12px;
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.jjs-details--plain[open] > .jjs-details__summary::before {
+    content: "▾";
+}
+
+.jjs-details--plain > .jjs-details__summary:hover {
+    opacity: 1;
+}
+
+/* Right-aligned annotation on a summary line (the tag pool size). */
+.jjs-details__aside {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+    opacity: 0.75;
+}
+
+.jjs-details__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0 2px 20px;
+}
+
+/* Action + status line; the reserved height stops the section from jumping on refresh. */
+.jjs-tools__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    min-height: 18px;
+}
+
+.jjs-kv {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    padding: 2px 0;
+    font-family: var(--b3-font-family-code, monospace);
+}
+
+.jjs-kv__k {
+    flex: 0 0 110px;
+    opacity: 0.7;
+}
+
+.jjs-kv__v {
+    flex: 1;
+    word-break: break-all;
+}
+
+/* ---------- result panel ---------- */
+
+.jjs-result {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.jjs-result__head {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.jjs-failed {
+    /* A3: the failed image list is pinned to the top and must never collapse. */
+    border: 1px solid var(--b3-card-error-color);
+    border-radius: var(--b3-border-radius);
+    background: var(--b3-card-error-background);
+    color: var(--b3-card-error-color);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.jjs-failed__title {
+    font-weight: 600;
+}
+
+.jjs-failed__item {
+    font-size: 12px;
+    font-family: var(--b3-font-family-code, monospace);
+    word-break: break-all;
+}
+
+.jjs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+    padding-left: 18px;
+    margin: 0;
+}
+
+/* ---------- dock ---------- */
+
+.jjs-dock {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 10px 16px;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* The dock stacks cards 10px apart; the dialog surfaces keep the roomier 12px rhythm. */
+.jjs-dock__content {
+    gap: 10px;
+}
+
+.jjs-tabs {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 2px;
+    border-bottom: 1px solid var(--b3-border-color);
+}
+
+.jjs-tab {
+    padding: 5px 10px;
+    margin-bottom: -1px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.72;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.jjs-tab:hover {
+    opacity: 1;
+}
+
+.jjs-tab--active {
+    border-bottom-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    opacity: 1;
+    font-weight: 600;
+}
+
+/* ---------- cards ---------- */
+
+.jjs-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    background: var(--b3-theme-surface);
+}
+
+.jjs-card__title {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+}
+
+/**
+ * Status card.
+ *
+ * A 3px accent bar instead of a coloured background: the tinted banner used to render
+ * `--b3-theme-primary` text on `--b3-theme-primary-lightest`, which is barely readable in the
+ * pastel themes. Text stays on `--b3-theme-on-background` and the tone only colours the bar,
+ * the dot and the status word.
+ */
+.jjs-status {
+    gap: 5px;
+    padding-left: 9px;
+    border-left: 3px solid var(--jjs-tone, var(--b3-border-color));
+}
+
+.jjs-status--ok {
+    --jjs-tone: var(--b3-card-success-color);
+}
+
+.jjs-status--info {
+    --jjs-tone: var(--b3-theme-primary);
+}
+
+.jjs-status--warn {
+    --jjs-tone: var(--b3-card-warning-color);
+}
+
+.jjs-status--error {
+    --jjs-tone: var(--b3-card-error-color);
+}
+
+.jjs-status--muted {
+    --jjs-tone: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+}
+
+.jjs-dot {
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.jjs-dot--ok {
+    color: var(--b3-card-success-color);
+}
+
+.jjs-dot--error {
+    color: var(--b3-card-error-color);
+}
+
+.jjs-status__top {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--jjs-tone, inherit);
+}
+
+/* `--b3-theme-primary` is a mid-tone lavender in pastel themes: fine as a bar/dot, too weak for
+ * 12px text. The "in progress" word therefore stays on the neutral text colour. */
+.jjs-status--info .jjs-status__label {
+    color: var(--b3-theme-on-background);
+}
+
+.jjs-status__spacer {
+    flex: 1;
+}
+
+.jjs-status__label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.jjs-status__title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--b3-theme-on-background);
+    overflow-wrap: anywhere;
+}
+
+.jjs-status__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+}
+
+.jjs-status__busy {
+    font-size: 11px;
+    line-height: 1.5;
+    opacity: 0.75;
+}
+
+/**
+ * Notebook the document belongs to, at the right end of the intent card's top line.
+ *
+ * It carries its own colour so the tone inherited from `.jjs-status__top` does not tint it: the
+ * tone belongs to the badge and the left bar, not to a piece of metadata.
+ */
+.jjs-status__notebook {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+    opacity: 0.8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jjs-link {
+    flex: 0 0 auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.jjs-link:hover {
+    color: var(--b3-theme-on-background);
+}
+
+/* ---------- actions ---------- */
+
+.jjs-actions-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.jjs-button--block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 6px 10px;
+    font-weight: 600;
+}
+
+.jjs-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.jjs-ghost {
+    padding: 2px 8px;
+    border: none;
+    border-radius: var(--b3-border-radius);
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.72;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.jjs-ghost:hover:not(:disabled) {
+    background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.05));
+    opacity: 1;
+}
+
+.jjs-ghost:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* Hairline between adjacent secondary actions, without an extra separator node. */
+.jjs-ghost + .jjs-ghost::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1px;
+    height: 10px;
+    transform: translateY(-50%);
+    background: var(--b3-border-color);
+}
+
+.jjs-ghost + .jjs-ghost {
+    position: relative;
+}
+
+.jjs-hint--inset {
+    padding: 0 2px;
+}
+
+/* ---------- history ---------- */
+
+.jjs-history {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.jjs-history__time {
+    flex: 0 0 auto;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+.jjs-history__title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+.jjs-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--b3-border-color);
+    overflow: hidden;
+}
+
+.jjs-progress__bar {
+    height: 100%;
+    background: var(--b3-theme-primary);
+    transition: width 0.2s ease;
+}
+
+.jjs-mono {
+    font-family: var(--b3-font-family-code, monospace);
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.jjs-empty {
+    padding: 12px;
+    text-align: center;
+    opacity: 0.7;
+    font-size: 12px;
+}

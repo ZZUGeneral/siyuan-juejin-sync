@@ -1,0 +1,28 @@
+{
+  "name": "siyuan-juejin-sync",
+  "version": "0.1.0",
+  "description": "SiYuan Note ⇄ Juejin sync plugin (unofficial private API)",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "siyuan",
+    "plugin",
+    "juejin"
+  ],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "npm run check && vite build",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:i18n": "vitest run tests/i18n.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "sass": "^1.80.0",
+    "siyuan": "^1.3.0",
+    "typescript": "~5.9.3",
+    "vite": "^6.3.5",
+    "vite-plugin-static-copy": "^2.3.0",
+    "vitest": "^2.1.9"
+  }
+}

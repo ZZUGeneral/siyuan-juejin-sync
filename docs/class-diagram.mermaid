@@ -1,0 +1,159 @@
+classDiagram
+    direction TB
+
+    class PluginEntry {
+        +onload()
+        +onLayoutReady()
+        +onunload()
+        +uninstall()
+        -settingsService
+        -syncEngine
+        -importer
+        -dockPanel
+        -registerDocMenu()
+    }
+
+    class SettingsService {
+        +load() SyncSettings
+        +save(patch) void
+        +getCredential() JuejinCredential
+        +setCredential(sid) void
+        +clearCredential() void
+        +loadJuejinMeta() JuejinMetaCache
+        +saveJuejinMeta(meta) void
+        -resolveSecretSource() string
+    }
+
+    class JuejinApi {
+        <<interface>>
+        +probeCredential() CredentialProbe
+        +fetchCategories() JuejinCategory[]
+        +fetchTags(opts) JuejinTag[]
+        +createDraft(input) JuejinDraftRef
+        +updateDraft(id, input) JuejinDraftRef
+        +getDraft(id) JuejinDraftDetail
+        +publishDraft(id, meta) JuejinArticleRef
+        +getArticle(id) JuejinArticleDetail
+        +uploadImage(bytes, mime, name) string
+        +probeEndpoints() EndpointProbe[]
+    }
+
+    class JuejinClient {
+        -credential JuejinCredential
+        -proxy HttpProxy
+        -signer SigV4Signer
+        +createDraft(input) JuejinDraftRef
+        +uploadImage(bytes, mime, name) string
+        -request(spec) JuejinResponse
+        -mapErrNo(res) SyncIssue
+    }
+
+    class HttpProxy {
+        +postJson(url, body, headers) ProxyResult
+        +getJson(url, headers) ProxyResult
+        +postBinary(url, bytes, headers) ProxyResult
+        +getBinary(url, headers) ProxyResult
+    }
+
+    class SigV4Signer {
+        +sign(params) SigV4Headers
+        +crc32Hex(bytes) string
+        -sha256hex(str) string
+        -hmac(key, str) string
+    }
+
+    class KernelApi {
+        <<interface>>
+        +exportMdContent(docId) ExportResult
+        +getBlockAttrs(id) Map
+        +setBlockAttrs(id, attrs) void
+        +createDocWithMd(nb, path, md) string
+        +fetchAssetBinary(path) Binary
+        +uploadAsset(bytes, name) string
+        +querySql(stmt) Array
+    }
+
+    class BindingService {
+        +read(docId) DocBinding
+        +write(docId, patch) void
+        +markFailed(docId, msg) void
+    }
+
+    class MarkdownSanitizer {
+        +sanitize(md, opts) SanitizeOutput
+        -stripYamlFrontMatter()
+        -stripBlockAttrs()
+        -replaceUnsupportedBlocks()
+        -downgradeRefs()
+        -assertClean()
+    }
+
+    class ImagePipeline {
+        -api JuejinApi
+        -kernel KernelApi
+        +collect(markdown) ImageRef[]
+        +process(markdown, refs, onProgress) ImageProcessResult
+        -uploadOne(ref) ImageUploadResult
+    }
+
+    class SyncEngine {
+        -api JuejinApi
+        -kernel KernelApi
+        -binding BindingService
+        -settings SettingsService
+        -sanitizer MarkdownSanitizer
+        -images ImagePipeline
+        +preview(docId) SyncPreview
+        +sync(docId, meta) SyncResult
+        -decideAction(binding) SyncAction
+        -writeBack(docId, ref, hash, status) void
+    }
+
+    class Importer {
+        -api JuejinApi
+        -kernel KernelApi
+        +parseLink(input) string
+        +fetchArticle(id) JuejinArticleDetail
+        +import(params) ImportResult
+        -relocateImages(md) RelocateResult
+    }
+
+    class SyncStore {
+        +get() SyncState
+        +set(patch) void
+        +subscribe(fn) Function
+    }
+
+    class DockPanel {
+        +init(el)
+        +render(state)
+        +destroy()
+    }
+
+    class SettingsPanel {
+        +open()
+        +renderGroups()
+        +probeCredential()
+    }
+
+    SyncEngine --> JuejinApi : 依赖接口
+    SyncEngine --> KernelApi
+    SyncEngine --> BindingService
+    SyncEngine --> MarkdownSanitizer
+    SyncEngine --> ImagePipeline
+    ImagePipeline --> JuejinApi
+    ImagePipeline --> KernelApi
+    Importer --> JuejinApi
+    Importer --> KernelApi
+    JuejinClient ..|> JuejinApi : 实现
+    JuejinClient --> HttpProxy
+    JuejinClient --> SigV4Signer
+    HttpProxy --> KernelApi : /api/network/forwardProxy
+    PluginEntry --> SyncEngine
+    PluginEntry --> Importer
+    PluginEntry --> SettingsService
+    PluginEntry --> DockPanel
+    PluginEntry --> SettingsPanel
+    DockPanel --> SyncStore
+    SyncEngine --> SyncStore : 推进度
+    SettingsService --> JuejinApi : 测试连接
