@@ -4,6 +4,11 @@
   "description": "SiYuan Note ⇄ Juejin sync plugin (unofficial private API)",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZZUGeneral/siyuan-juejin-sync.git"
+  },
+  "homepage": "https://github.com/ZZUGeneral/siyuan-juejin-sync#readme",
   "keywords": [
     "siyuan",
     "plugin",
